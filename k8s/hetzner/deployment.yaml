@@ -17,6 +17,7 @@ spec:
       containers:
       - name: ipfs-bucket
         image: your-registry/ipfs-bucket-example:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
         env:
