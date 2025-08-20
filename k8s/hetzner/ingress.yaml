@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ipfs-bucket-ingress
+  annotations:
+    # Hetzner Load Balancer annotations
+    kubernetes.io/ingress.class: "hcloud"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+spec:
+  tls:
+  - hosts:
+    - ipfs.yourdomain.com  # Replace with your actual domain
+    secretName: ipfs-bucket-tls
+  rules:
+  - host: ipfs.yourdomain.com  # Replace with your actual domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ipfs-bucket-service
+            port:
+              number: 80
