@@ -8,23 +8,22 @@ import { MemoryBlockstore } from 'blockstore-core'
 import { CID } from 'multiformats/cid'
 import { base32 } from 'multiformats/bases/base32'
 
-// Custom GCS-backed blockstore
-class GCSBlockstore extends MemoryBlockstore {
-  constructor(bucket) {
+// Custom storage-backed blockstore supporting GCS and S3
+class StorageBlockstore extends MemoryBlockstore {
+  constructor(storageAdapter) {
     super()
-    this.bucket = bucket
+    this.storage = storageAdapter
   }
 
   async put(key, val) {
     // Store in memory first
     await super.put(key, val)
     
-    // Then persist to GCS
+    // Then persist to storage
     // Convert CID to base32 for filesystem compatibility
     const cid = CID.decode(key.bytes || key)
     const keyStr = cid.toString(base32)
-    const file = this.bucket.file(`blocks/${keyStr}`)
-    await file.save(val)
+    await this.storage.put(`blocks/${keyStr}`, val)
   }
 
   async get(key) {
@@ -32,11 +31,14 @@ class GCSBlockstore extends MemoryBlockstore {
       // Try memory first
       return await super.get(key)
     } catch (err) {
-      // Fall back to GCS
+      // Fall back to storage
       const cid = CID.decode(key.bytes || key)
       const keyStr = cid.toString(base32)
-      const file = this.bucket.file(`blocks/${keyStr}`)
-      const [buffer] = await file.download()
+      const buffer = await this.storage.get(`blocks/${keyStr}`)
+      
+      if (!buffer) {
+        throw new Error(`Block not found: ${keyStr}`)
+      }
       
       // Cache in memory
       await super.put(key, buffer)
@@ -51,19 +53,17 @@ class GCSBlockstore extends MemoryBlockstore {
       return true
     }
     
-    // Check GCS
+    // Check storage
     const cid = CID.decode(key.bytes || key)
     const keyStr = cid.toString(base32)
-    const file = this.bucket.file(`blocks/${keyStr}`)
-    const [exists] = await file.exists()
-    return exists
+    return await this.storage.has(`blocks/${keyStr}`)
   }
 }
 
-export default async (gcsBucket, config) => {
-  console.log('Initializing IPFS with GCS blockstore...')
+export default async (storageAdapter, config) => {
+  console.log('Initializing IPFS with storage blockstore...')
   
-  const blockstore = new GCSBlockstore(gcsBucket)
+  const blockstore = new StorageBlockstore(storageAdapter)
 
   const libp2p = await createLibp2p({
     addresses: {
@@ -161,6 +161,6 @@ export default async (gcsBucket, config) => {
     }
   }
 
-  console.log('IPFS (Helia) node initialized with GCS backend')
+  console.log('IPFS (Helia) node initialized with storage backend')
   return ipfsWrapper
 }
