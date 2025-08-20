@@ -1,6 +1,7 @@
 const bucketName  = process.env.BUCKET_NAME
 const ipfsRepoLockName  = process.env.IPFS_REPO_LOCK_NAME || `${Date.now()}`
 const ipfsRepoPath = process.env.IPFS_REPO_PATH || '/'
+const storageProvider = process.env.STORAGE_PROVIDER || 'gcs' // 'gcs' or 's3'
 
 const port = parseInt(process.env.PORT || 3000)
 const fileKey = process.env.FILE_KEY
@@ -22,5 +23,6 @@ export default {
   ipfsRepoPath,
   ipfsConfig,
   port,
-  fileKey
+  fileKey,
+  storageProvider
 }
