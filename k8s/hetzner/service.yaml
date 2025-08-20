@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ipfs-bucket-service
+  annotations:
+    # Hetzner Load Balancer annotations for Falkenstein
+    load-balancer.hetzner.cloud/name: "ipfs-bucket-lb"
+    load-balancer.hetzner.cloud/location: "fsn1"
+    load-balancer.hetzner.cloud/type: "lb11"
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  - port: 443
+    targetPort: 3000
+    protocol: TCP
+    name: https
+  selector:
+    app: ipfs-bucket

@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ipfs-bucket
+  labels:
+    app: ipfs-bucket
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ipfs-bucket
+  template:
+    metadata:
+      labels:
+        app: ipfs-bucket
+    spec:
+      containers:
+      - name: ipfs-bucket
+        image: your-registry/ipfs-bucket-example:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: ipfs-bucket-config
+              key: bucket-name
+        - name: STORAGE_PROVIDER
+          valueFrom:
+            configMapKeyRef:
+              name: ipfs-bucket-config
+              key: storage-provider
+        - name: S3_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: ipfs-bucket-config
+              key: s3-region
+        - name: S3_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: ipfs-bucket-config
+              key: s3-endpoint
+        - name: S3_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: hetzner-s3-credentials
+              key: access-key
+        - name: S3_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: hetzner-s3-credentials
+              key: secret-key
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3

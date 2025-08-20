@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ipfs-bucket-config
+data:
+  bucket-name: "ipfs-production-fsn1"  # Hetzner bucket in Falkenstein
+  storage-provider: "s3"
+  s3-region: "eu-central-1"
+  s3-endpoint: "https://fsn1.your-objectstorage.com"
